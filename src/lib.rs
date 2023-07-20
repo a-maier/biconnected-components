@@ -1,3 +1,26 @@
+//! Compute the [biconnected
+//! components](https://en.wikipedia.org/wiki/Biconnected_component)
+//! of a graph.
+//!
+//! # Example
+//!
+//! ```
+//! use petgraph::graph::UnGraph;
+//! use biconnected_components::Bcc;
+//!
+//! // construct a simple graph
+//! let g = UnGraph::<(), ()>::from_edges([
+//!    (0, 1),
+//!    (1, 2)
+//!  ]);
+//!
+//! // Get a vector of the biconnected components defined by their node indices
+//! let bcc = g.bcc();
+//! assert_eq!(bcc.len(), 2);
+//! for bcc_nodes in bcc {
+//!    println!("Found biconnected component with nodes {bcc_nodes:?}");
+//! }
+//! ```
 use std::cmp::min;
 
 use petgraph::{prelude::UnGraph, stable_graph::IndexType, visit::NodeIndexable};
@@ -20,6 +43,11 @@ impl<N, E, Ix: IndexType> Bcc for UnGraph<N, E, Ix> {
     }
 }
 
+// Find biconnected components using the algorithm from
+// Hopcroft, J.; Tarjan, R.
+// "Algorithm 447: efficient algorithms for graph manipulation".
+// Communications of the ACM. 16 (6): 372–378.
+// [doi:10.1145/362248.362272](https://doi.org/10.1145%2F362248.362272).
 struct HopcroftTarjan {
     visited: Vec<bool>,
     depth: Vec<usize>,
@@ -138,6 +166,61 @@ mod tests {
 
     use super::*;
 
+    fn bcc_indices(
+        g: &UnGraph::<(), (), u32>,
+    ) -> Vec<Vec<usize>> {
+        let mut bcc: Vec<Vec<usize>> = g.bcc().into_iter().map(
+            |bcc| bcc.into_iter().map(|i| g.to_index(i)).collect()
+        ).collect();
+        for bcc in &mut bcc {
+            bcc.sort();
+        }
+        bcc.sort();
+        bcc
+    }
+
+    #[test]
+    fn trivial() {
+        let g: UnGraph::<(), (), u32> = UnGraph::default();
+        assert!(g.bcc().is_empty());
+    }
+
+    #[test]
+    fn single_edge() {
+        let g: UnGraph::<(), (), u32> = Graph::from_edges([(0, 1)]);
+        let bcc = bcc_indices(&g);
+        assert_eq!(bcc, [[0, 1]]);
+    }
+
+    #[test]
+    fn star_2() {
+        let g: UnGraph::<(), (), u32> = Graph::from_edges([(0, 1), (0, 2)]);
+        let bcc = bcc_indices(&g);
+        let bcc_ref = [[0, 1], [0, 2]];
+        assert_eq!(bcc, bcc_ref);
+    }
+
+    #[test]
+    fn star_2_alt() {
+        let g: UnGraph::<(), (), u32> = Graph::from_edges([(0, 1), (1, 2)]);
+        let bcc = bcc_indices(&g);
+        let bcc_ref = [[0, 1], [1, 2]];
+        assert_eq!(bcc, bcc_ref);
+    }
+
+    #[test]
+    fn lacrosse_stick() {
+        let g: UnGraph::<(), (), u32> = Graph::from_edges([
+            (0, 1),
+            (1, 2),
+            (2, 0),
+            (2, 3),
+        ]);
+        let bcc = bcc_indices(&g);
+        let bcc_ref = [vec![0, 1, 2], vec![2, 3]];
+        assert_eq!(bcc, bcc_ref);
+    }
+
     #[test]
     fn wp_example() {
         // example taken from wikipedia
@@ -159,13 +242,7 @@ mod tests {
             (11, 12, ()),
             (12, 13, ()),
         ]);
-        let mut bcc: Vec<Vec<usize>> = g.bcc().into_iter().map(
-            |bcc| bcc.into_iter().map(|i| g.to_index(i)).collect()
-        ).collect();
-        for bcc in &mut bcc {
-            bcc.sort();
-        }
-        bcc.sort();
+        let bcc = bcc_indices(&g);
         let bcc_ref = [
             vec![0, 1],
             vec![0, 9],
