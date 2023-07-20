@@ -63,7 +63,6 @@ impl HopcroftTarjan {
         self.visited[node] = true;
         self.depth[node] = depth;
         self.lowpoint[node] = depth;
-        let mut num_children = 0;
 
         let mut is_cut_vx = false;
 
@@ -74,7 +73,6 @@ impl HopcroftTarjan {
                 let parent = node;
                 self.parent[n] = parent;
                 self.find_bcc_from(g, n, depth + 1, res);
-                num_children += 1;
                 if self.lowpoint[n] >= self.depth[parent] {
                     is_cut_vx = true;
                 }
@@ -98,7 +96,11 @@ impl HopcroftTarjan {
                     res.push(bcc);
                 }
             }
-        } else if node == 0 && num_children > 1 {
+        } else if node == 0 {
+            // The starting node is only a cut vertex if it has more
+            // than one child. But even if there is only a single
+            // child the corresponding subtree is a biconnected
+            // component
             for n_idx in g.neighbors(idx) {
                 let n = g.to_index(n_idx);
                 if self.parent[n] == node {
