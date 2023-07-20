@@ -65,7 +65,7 @@ impl HopcroftTarjan {
         }
     }
 
-    fn find_bcc<'a, N, E, Ix: IndexType>(
+    fn find_bcc< N, E, Ix: IndexType>(
         &mut self,
         g: &UnGraph<N, E, Ix>
     ) -> Vec<Vec<NodeIndex<Ix>>> {
@@ -81,9 +81,9 @@ impl HopcroftTarjan {
         }
     }
 
-    fn find_bcc_from<'a, N, E, Ix: IndexType>(
+    fn find_bcc_from<N, E, Ix: IndexType>(
         &mut self,
-        g: &'a UnGraph<N, E, Ix>,
+        g: &UnGraph<N, E, Ix>,
         node: usize,
         depth: usize,
         res: &mut Vec<Vec<NodeIndex<Ix>>>
