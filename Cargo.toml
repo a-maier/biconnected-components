@@ -1,0 +1,14 @@
+[package]
+name = "biconnected-components"
+version = "0.1.0"
+edition = "2021"
+description = "Find biconnected components in a graph"
+authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
+license = "MIT OR Apache-2.0"
+readme = "Readme.md"
+keywords = ["graph-algorithms"]
+categories = ["mathematics"]
+repository = "https://github.com/a-maier/biconnected-components"
+
+[dependencies]
+petgraph = "0.6"
