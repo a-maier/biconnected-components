@@ -46,7 +46,11 @@ impl HopcroftTarjan {
         }
         let mut res = vec![];
         self.find_bcc_from(g, 0, 0, &mut res);
-        res
+        if res.is_empty() {
+            vec![g.node_indices().collect()]
+        } else {
+            res
+        }
     }
 
     fn find_bcc_from<'a, N, E, Ix: IndexType>(
