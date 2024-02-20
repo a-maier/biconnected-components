@@ -23,8 +23,10 @@
 //! ```
 use std::cmp::min;
 
-use petgraph::{prelude::UnGraph, stable_graph::IndexType, visit::NodeIndexable};
 use petgraph::stable_graph::NodeIndex;
+use petgraph::{
+    prelude::UnGraph, stable_graph::IndexType, visit::NodeIndexable,
+};
 
 pub trait Bcc {
     type Output;
@@ -32,7 +34,6 @@ pub trait Bcc {
     /// Return all biconnected components
     fn bcc(&self) -> Self::Output;
 }
-
 
 impl<N, E, Ix: IndexType> Bcc for UnGraph<N, E, Ix> {
     type Output = Vec<Vec<NodeIndex<Ix>>>;
@@ -65,9 +66,9 @@ impl HopcroftTarjan {
         }
     }
 
-    fn find_bcc< N, E, Ix: IndexType>(
+    fn find_bcc<N, E, Ix: IndexType>(
         &mut self,
-        g: &UnGraph<N, E, Ix>
+        g: &UnGraph<N, E, Ix>,
     ) -> Vec<Vec<NodeIndex<Ix>>> {
         if g.node_count() == 0 {
             return vec![];
@@ -86,7 +87,7 @@ impl HopcroftTarjan {
         g: &UnGraph<N, E, Ix>,
         node: usize,
         depth: usize,
-        res: &mut Vec<Vec<NodeIndex<Ix>>>
+        res: &mut Vec<Vec<NodeIndex<Ix>>>,
     ) {
         self.visited[node] = true;
         self.depth[node] = depth;
@@ -104,21 +105,18 @@ impl HopcroftTarjan {
                 if self.lowpoint[n] >= self.depth[parent] {
                     is_cut_vx = true;
                 }
-                self.lowpoint[parent] = min(
-                    self.lowpoint[parent],
-                    self.lowpoint[n]
-                );
+                self.lowpoint[parent] =
+                    min(self.lowpoint[parent], self.lowpoint[n]);
             } else if n != self.parent[node] {
-                self.lowpoint[node] = min(
-                    self.lowpoint[node],
-                    self.depth[n]
-                );
+                self.lowpoint[node] = min(self.lowpoint[node], self.depth[n]);
             }
         }
         if node > 0 && is_cut_vx {
             for n_idx in g.neighbors(idx) {
                 let n = g.to_index(n_idx);
-                if self.parent[n] == node && self.lowpoint[n] >= self.depth[node] {
+                if self.parent[n] == node
+                    && self.lowpoint[n] >= self.depth[node]
+                {
                     let mut bcc = vec![idx, n_idx];
                     self.add_subtree(g, n, &mut bcc);
                     res.push(bcc);
@@ -157,7 +155,6 @@ impl HopcroftTarjan {
             }
         }
     }
-
 }
 
 #[cfg(test)]
@@ -166,12 +163,12 @@ mod tests {
 
     use super::*;
 
-    fn bcc_indices(
-        g: &UnGraph::<(), (), u32>,
-    ) -> Vec<Vec<usize>> {
-        let mut bcc: Vec<Vec<usize>> = g.bcc().into_iter().map(
-            |bcc| bcc.into_iter().map(|i| g.to_index(i)).collect()
-        ).collect();
+    fn bcc_indices(g: &UnGraph<(), (), u32>) -> Vec<Vec<usize>> {
+        let mut bcc: Vec<Vec<usize>> = g
+            .bcc()
+            .into_iter()
+            .map(|bcc| bcc.into_iter().map(|i| g.to_index(i)).collect())
+            .collect();
         for bcc in &mut bcc {
             bcc.sort();
         }
@@ -181,20 +178,20 @@ mod tests {
 
     #[test]
     fn trivial() {
-        let g: UnGraph::<(), (), u32> = UnGraph::default();
+        let g: UnGraph<(), (), u32> = UnGraph::default();
         assert!(g.bcc().is_empty());
     }
 
     #[test]
     fn single_edge() {
-        let g: UnGraph::<(), (), u32> = Graph::from_edges([(0, 1)]);
+        let g: UnGraph<(), (), u32> = Graph::from_edges([(0, 1)]);
         let bcc = bcc_indices(&g);
         assert_eq!(bcc, [[0, 1]]);
     }
 
     #[test]
     fn star_2() {
-        let g: UnGraph::<(), (), u32> = Graph::from_edges([(0, 1), (0, 2)]);
+        let g: UnGraph<(), (), u32> = Graph::from_edges([(0, 1), (0, 2)]);
         let bcc = bcc_indices(&g);
         let bcc_ref = [[0, 1], [0, 2]];
         assert_eq!(bcc, bcc_ref);
@@ -202,7 +199,7 @@ mod tests {
 
     #[test]
     fn star_2_alt() {
-        let g: UnGraph::<(), (), u32> = Graph::from_edges([(0, 1), (1, 2)]);
+        let g: UnGraph<(), (), u32> = Graph::from_edges([(0, 1), (1, 2)]);
         let bcc = bcc_indices(&g);
         let bcc_ref = [[0, 1], [1, 2]];
         assert_eq!(bcc, bcc_ref);
@@ -210,12 +207,8 @@ mod tests {
 
     #[test]
     fn lacrosse_stick() {
-        let g: UnGraph::<(), (), u32> = Graph::from_edges([
-            (0, 1),
-            (1, 2),
-            (2, 0),
-            (2, 3),
-        ]);
+        let g: UnGraph<(), (), u32> =
+            Graph::from_edges([(0, 1), (1, 2), (2, 0), (2, 3)]);
         let bcc = bcc_indices(&g);
         let bcc_ref = [vec![0, 1, 2], vec![2, 3]];
         assert_eq!(bcc, bcc_ref);
@@ -224,7 +217,7 @@ mod tests {
     #[test]
     fn wp_example() {
         // example taken from wikipedia
-        let g: UnGraph::<(), (), u32> = Graph::from_edges([
+        let g: UnGraph<(), (), u32> = Graph::from_edges([
             (0, 1, ()),
             (0, 9, ()),
             (1, 2, ()),
