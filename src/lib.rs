@@ -151,7 +151,8 @@ impl HopcroftTarjan {
         let mut is_cut_vx = false;
 
         let idx = g.from_index(node);
-        for n_idx in g.neighbors(idx) {
+        // filter: ignore self-loops
+        for n_idx in g.neighbors(idx).filter(|&n_idx| n_idx != idx) {
             let n = g.to_index(n_idx);
             if !self.visited[n] {
                 let parent = node;
@@ -182,7 +183,7 @@ impl HopcroftTarjan {
             // than one child. But even if there is only a single
             // child the corresponding subtree is a biconnected
             // component
-            for n_idx in g.neighbors(idx) {
+            for n_idx in g.neighbors(idx).filter(|&n_idx| n_idx != idx) {
                 let n = g.to_index(n_idx);
                 if self.parent[n] == node {
                     let mut bcc = vec![idx, n_idx];
@@ -302,4 +303,28 @@ mod tests {
         ];
         assert_eq!(bcc, bcc_ref);
     }
+
+    #[test]
+    fn self_loops() {
+        let g: UnGraph<(), (), u32> = Graph::from_edges([
+            (0, 0, ()),
+        ]);
+        let bcc = bcc_indices(&g);
+        let bcc_ref = [
+            vec![0],
+        ];
+        assert_eq!(bcc, bcc_ref);
+
+        let g: UnGraph<(), (), u32> = Graph::from_edges([
+            (0, 0, ()),
+            (1, 0, ()),
+            (1, 1, ()),
+        ]);
+        let bcc = bcc_indices(&g);
+        let bcc_ref = [
+            vec![0, 1],
+        ];
+        assert_eq!(bcc, bcc_ref);
+    }
+
 }
