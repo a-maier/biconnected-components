@@ -23,6 +23,7 @@
 //! ```
 use std::cmp::min;
 
+use petgraph::graph::Edge;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{
     prelude::UnGraph, stable_graph::IndexType, visit::NodeIndexable,
@@ -51,52 +52,53 @@ pub trait SplitIntoBcc {
     fn split_into_bcc(self) -> Self::Output;
 }
 
-impl<N, E, Ix: IndexType> SplitIntoBcc for UnGraph<N, E, Ix> {
+impl<N: Clone, E, Ix: IndexType> SplitIntoBcc for UnGraph<N, E, Ix> {
     type Output = Vec<UnGraph<N, E, Ix>>;
 
     fn split_into_bcc(self) -> Self::Output {
-        let bcc = self.bcc();
-        let mut node_in_bcc = vec![0; self.node_count()];
-        for (n, bcc) in bcc.iter().enumerate() {
-            for node in bcc {
-                node_in_bcc[node.index()] = n;
+        let bccs = self.bcc();
+        let res = bccs.iter().map(|bcc| {
+            let mut g = UnGraph::with_capacity(bcc.len(), 0);
+            for n in bcc {
+                g.add_node(self.node_weight(*n).unwrap().clone());
+            }
+            g
+        });
+        let mut res = Vec::from_iter(res);
+        let (nodes, edges) = self.into_nodes_edges();
+        for edge in edges {
+            if edge.source() == edge.target() {
+                // self-loops are their own bcc
+                let mut g = UnGraph::with_capacity(1, 1);
+                let weight = nodes[edge.source().index()].weight.clone();
+                let idx = g.add_node(weight);
+                g.add_edge(idx, idx, edge.weight);
+                res.push(g);
+            } else {
+                add_edge(&mut res, &bccs, edge);
             }
         }
-        let mut bcc_nodes = Vec::from_iter(
-            bcc.iter().map(|bcc| Vec::with_capacity(bcc.len()))
-        );
-        let (all_nodes, all_edges) = self.into_nodes_edges();
-        for (n, node) in all_nodes.into_iter().enumerate() {
-            let nbcc = node_in_bcc[n];
-            bcc_nodes[nbcc].push((n, node));
-        }
-        // using a vec![] macro here doesn't work, as that requires E to be Clone
-        // (rust 1.76.0)
-        let mut bcc_edges = Vec::from_iter((0..bcc.len()).map(|_| Vec::new()));
-        for edge in all_edges {
-            let from = edge.source().index();
-            let to = edge.target().index();
-            let nbcc = node_in_bcc[from];
-            debug_assert_eq!(nbcc, node_in_bcc[to]);
-            let from = bcc_nodes[nbcc].iter().position(|n| n.0 == from).unwrap();
-            let to = bcc_nodes[nbcc].iter().position(|n| n.0 == to).unwrap();
-            bcc_edges[nbcc].push((from, to, edge.weight));
-        }
-        bcc_nodes.into_iter()
-            .zip(bcc_edges)
-            .map(|(nodes, edges)| {
-                let mut g = UnGraph::with_capacity(nodes.len(), edges.len());
-                for (_, node) in nodes {
-                    g.add_node(node.weight);
-                }
-                for (from, to, weight) in edges {
-                    let from = g.from_index(from);
-                    let to = g.from_index(to);
-                    g.add_edge(from, to, weight);
-                }
-                g
-            }).collect()
+        res
     }
+}
+
+fn add_edge<N: Clone, E, Ix: IndexType>(
+    res: &mut [UnGraph<N, E, Ix>],
+    bccs: &[Vec<NodeIndex<Ix>>],
+    edge: Edge<E, Ix>) {
+    for (res, bcc) in res.iter_mut().zip(bccs.iter()) {
+        let source_pos = bcc.iter().position(|&n| n == edge.source());
+        if let Some(from) = source_pos {
+            let target_pos = bcc.iter().position(|&n| n == edge.target());
+            if let Some(to) = target_pos {
+                let from = res.from_index(from);
+                let to = res.from_index(to);
+                res.add_edge(from, to, edge.weight);
+                return;
+            }
+        }
+    }
+    unreachable!("Found edge that is in none of the biconnected components");
 }
 
 // Find biconnected components using the algorithm from
