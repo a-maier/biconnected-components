@@ -6,7 +6,7 @@
 //!
 //! ```
 //! use petgraph::graph::UnGraph;
-//! use biconnected_components::Bcc;
+//! use biconnected_components::{Bcc, SplitIntoBcc};
 //!
 //! // construct a simple graph
 //! let g = UnGraph::<(), ()>::from_edges([
@@ -20,6 +20,13 @@
 //! for bcc_nodes in bcc {
 //!    println!("Found biconnected component with nodes {bcc_nodes:?}");
 //! }
+//!
+//! // Split up the graph into its biconnected components, that is
+//! // two identical graphs with two nodes connected by single edge
+//! let bcc = g.split_into_bcc();
+//! assert_eq!(bcc.len(), 2);
+//! assert!(bcc.iter().all(|g| g.node_count() == 2));
+//! assert!(bcc.iter().all(|g| g.edge_count() == 1));
 //! ```
 use std::cmp::min;
 
