@@ -80,9 +80,10 @@ impl<N: Clone, E, Ix: IndexType> SplitIntoBcc for UnGraph<N, E, Ix> {
                 // first, ensure that we are not double-counting
                 if res.len() == 1
                     && res[0].node_count() == 1
-                    && res[0].edge_count() == 0 {
-                        res.clear();
-                    }
+                    && res[0].edge_count() == 0
+                {
+                    res.clear();
+                }
                 //
                 let mut g = UnGraph::with_capacity(1, 1);
                 let weight = nodes[edge.source().index()].weight.clone();
@@ -100,7 +101,8 @@ impl<N: Clone, E, Ix: IndexType> SplitIntoBcc for UnGraph<N, E, Ix> {
 fn add_edge<N: Clone, E, Ix: IndexType>(
     res: &mut [UnGraph<N, E, Ix>],
     bccs: &[Vec<NodeIndex<Ix>>],
-    edge: Edge<E, Ix>) {
+    edge: Edge<E, Ix>,
+) {
     for (res, bcc) in res.iter_mut().zip(bccs.iter()) {
         let source_pos = bcc.iter().position(|&n| n == edge.source());
         if let Some(from) = source_pos {
@@ -323,24 +325,15 @@ mod tests {
 
     #[test]
     fn self_loops() {
-        let g: UnGraph<(), (), u32> = Graph::from_edges([
-            (0, 0, ()),
-        ]);
+        let g: UnGraph<(), (), u32> = Graph::from_edges([(0, 0, ())]);
         let bcc = bcc_indices(&g);
-        let bcc_ref = [
-            vec![0],
-        ];
+        let bcc_ref = [vec![0]];
         assert_eq!(bcc, bcc_ref);
 
-        let g: UnGraph<(), (), u32> = Graph::from_edges([
-            (0, 0, ()),
-            (1, 0, ()),
-            (1, 1, ()),
-        ]);
+        let g: UnGraph<(), (), u32> =
+            Graph::from_edges([(0, 0, ()), (1, 0, ()), (1, 1, ())]);
         let bcc = bcc_indices(&g);
-        let bcc_ref = [
-            vec![0, 1],
-        ];
+        let bcc_ref = [vec![0, 1]];
         assert_eq!(bcc, bcc_ref);
     }
 
@@ -357,9 +350,7 @@ mod tests {
         assert_eq!(bccs[0].node_count(), 1);
         assert_eq!(bccs[0].edge_count(), 0);
 
-        let g: UnGraph<(), (), u32> = Graph::from_edges([
-            (0, 0, ())
-        ]);
+        let g: UnGraph<(), (), u32> = Graph::from_edges([(0, 0, ())]);
         let bccs = g.split_into_bcc();
         assert_eq!(bccs.len(), 1);
         assert_eq!(bccs[0].node_count(), 1);
