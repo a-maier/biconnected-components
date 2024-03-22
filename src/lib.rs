@@ -69,6 +69,14 @@ impl<N: Clone, E, Ix: IndexType> SplitIntoBcc for UnGraph<N, E, Ix> {
         for edge in edges {
             if edge.source() == edge.target() {
                 // self-loops are their own bcc
+
+                // first, ensure that we are not double-counting
+                if res.len() == 1
+                    && res[0].node_count() == 1
+                    && res[0].edge_count() == 0 {
+                        res.clear();
+                    }
+                //
                 let mut g = UnGraph::with_capacity(1, 1);
                 let weight = nodes[edge.source().index()].weight.clone();
                 let idx = g.add_node(weight);
