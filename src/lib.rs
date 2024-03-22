@@ -337,4 +337,25 @@ mod tests {
         assert_eq!(bcc, bcc_ref);
     }
 
+    #[test]
+    fn split() {
+        let g: UnGraph<(), (), u32> = Graph::new_undirected();
+        let bccs = g.split_into_bcc();
+        assert!(bccs.is_empty());
+
+        let mut g: UnGraph<(), (), u32> = Graph::new_undirected();
+        g.add_node(());
+        let bccs = g.clone().split_into_bcc();
+        assert_eq!(bccs.len(), 1);
+        assert_eq!(bccs[0].node_count(), 1);
+        assert_eq!(bccs[0].edge_count(), 0);
+
+        let g: UnGraph<(), (), u32> = Graph::from_edges([
+            (0, 0, ())
+        ]);
+        let bccs = g.split_into_bcc();
+        assert_eq!(bccs.len(), 1);
+        assert_eq!(bccs[0].node_count(), 1);
+        assert_eq!(bccs[0].edge_count(), 1);
+    }
 }
