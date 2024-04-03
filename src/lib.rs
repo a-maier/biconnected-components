@@ -148,7 +148,11 @@ impl HopcroftTarjan {
             return vec![];
         }
         let mut res = vec![];
-        self.find_bcc_from(g, 0, 0, &mut res);
+        let mut start_node = 0;
+        while let Some(start) = self.next_start_pos(start_node) {
+            self.find_bcc_from(g, start, 0, &mut res);
+            start_node = start + 1;
+        }
         if res.is_empty() {
             vec![g.node_indices().collect()]
         } else {
@@ -230,6 +234,13 @@ impl HopcroftTarjan {
             }
         }
     }
+
+    fn next_start_pos(&self, nskip: usize) -> Option<usize> {
+        self.visited.iter()
+            .skip(nskip)
+            .position(|v| !v)
+            .map(|p| p + nskip)
+    }
 }
 
 #[cfg(test)]
@@ -286,6 +297,19 @@ mod tests {
             Graph::from_edges([(0, 1), (1, 2), (2, 0), (2, 3)]);
         let bcc = bcc_indices(&g);
         let bcc_ref = [vec![0, 1, 2], vec![2, 3]];
+        assert_eq!(bcc, bcc_ref);
+    }
+
+    #[test]
+    fn forest() {
+        let g: UnGraph<(), (), u32> = Graph::from_edges([
+            (0, 1),
+            (1, 2),
+            (3 ,4),
+            (3, 5),
+        ]);
+        let bcc = bcc_indices(&g);
+        let bcc_ref = [[0, 1], [1, 2], [3, 4], [3, 5]];
         assert_eq!(bcc, bcc_ref);
     }
 
