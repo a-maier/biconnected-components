@@ -1,7 +1,7 @@
 [package]
 name = "biconnected-components"
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 description = "Find biconnected components in a graph"
 authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
 license = "MIT OR Apache-2.0"
