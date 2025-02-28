@@ -237,7 +237,8 @@ impl HopcroftTarjan {
     }
 
     fn next_start_pos(&self, nskip: usize) -> Option<usize> {
-        self.visited.iter()
+        self.visited
+            .iter()
             .skip(nskip)
             .position(|v| !v)
             .map(|p| p + nskip)
@@ -303,12 +304,8 @@ mod tests {
 
     #[test]
     fn forest() {
-        let g: UnGraph<(), (), u32> = Graph::from_edges([
-            (0, 1),
-            (1, 2),
-            (3 ,4),
-            (3, 5),
-        ]);
+        let g: UnGraph<(), (), u32> =
+            Graph::from_edges([(0, 1), (1, 2), (3, 4), (3, 5)]);
         let bcc = bcc_indices(&g);
         let bcc_ref = [[0, 1], [1, 2], [3, 4], [3, 5]];
         assert_eq!(bcc, bcc_ref);
