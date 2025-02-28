@@ -11,4 +11,4 @@ categories = ["mathematics"]
 repository = "https://github.com/a-maier/biconnected-components"
 
 [dependencies]
-petgraph = "0.6"
+petgraph = "0.7"
