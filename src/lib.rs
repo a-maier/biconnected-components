@@ -30,10 +30,11 @@
 //! ```
 use std::cmp::min;
 
-use petgraph::graph::Edge;
-use petgraph::stable_graph::NodeIndex;
+pub use petgraph;
+
 use petgraph::{
-    prelude::UnGraph, stable_graph::IndexType, visit::NodeIndexable,
+    graph::Edge, prelude::UnGraph, stable_graph::IndexType,
+    stable_graph::NodeIndex, visit::NodeIndexable,
 };
 
 pub trait Bcc {
